@@ -1,143 +1,90 @@
+
 import math
 import sympy
+import numpy as np
+import matplotlib.pyplot as plt
 
-# ... (el resto de las funciones como mostrar_guia_sintaxis e iteracion_punto_fijo permanecen igual) ...
-
-# ---------------------------------------------------------------------------
-# FUNCIÓN DE AYUDA: Muestra la guía de sintaxis
-# ---------------------------------------------------------------------------
-def mostrar_guia_sintaxis():
-    """Imprime una tabla con ejemplos de cómo escribir funciones."""
-    print("--- Guía Rápida de Sintaxis ---")
-    print("Operación          | Notación Matemática | Cómo Escribirlo en el Programa")
-    print("-------------------|---------------------|--------------------------------")
-    print("Multiplicación     | 5x, (x+1)(x-2)      | 5*x, (x+1)*(x-2)")
-    print("Potencia           | x², x^3             | x**2, x**3")
-    print("Seno               | sen(x)              | sin(1*x)")
-    print("Coseno             | cos(x)              | cos(1*x)")
-    print("Exponencial (e)    | e^x                 | exp(x)")
-    print("Raíz Cuadrada      | √x                  | sqrt(x)")
-    print("Logaritmo Natural  | ln(x)               | log(x)")
-    print("Constante Pi (π)   | π                   | pi")
-    print("------------------------------------------------------------------")
-
-# ---------------------------------------------------------------------------
-# FUNCIÓN 1: El algoritmo numérico
-# ---------------------------------------------------------------------------
-def iteracion_punto_fijo(g, x0, es, valor_verdadero=None, max_iter=50, silent=False):
-    """
-    Encuentra la raíz de una función.
-    El parámetro 'silent' permite ejecutarlo sin imprimir la tabla para el pre-cálculo.
-    """
-    if not silent:
-        # Construye el encabezado de la tabla
-        header = f"{'i':<5}{'x_i':<18}{'ε_a (%)':<15}"
-        if valor_verdadero is not None:
-            header += f"{'ε_t (%)':<15}"
-        print(header)
-        print("-" * len(header))
-
-    x_anterior = x0
-
-    if not silent:
-        # Imprime la primera línea (iteración 0)
-        linea_0 = f"{0:<5}{x_anterior:<18.6f}{'---':<15}"
-        if valor_verdadero is not None and valor_verdadero != 0:
-            error_t = abs((valor_verdadero - x_anterior) / valor_verdadero) * 100
-            linea_0 += f"{error_t:<15.4f}"
-        print(linea_0)
-
-    for i in range(1, max_iter + 1):
-        x_actual = g(x_anterior)
-        
-        if x_actual == 0 and x_anterior != 0: return None
-        
-        error_aprox = abs((x_actual - x_anterior) / x_actual) * 100 if x_actual != 0 else 0
-
-        if not silent:
-            linea_actual = f"{i:<5}{x_actual:<18.6f}{error_aprox:<15.4f}"
-            if valor_verdadero is not None and valor_verdadero != 0:
-                error_t = abs((valor_verdadero - x_actual) / valor_verdadero) * 100
-                linea_actual += f"{error_t:<15.4f}"
-            print(linea_actual)
-
-        if error_aprox < es:
-            if not silent:
-                print(f"\nCriterio de detención |ε_a| < {es}% alcanzado.")
-            return x_actual
-            
-        x_anterior = x_actual
-        
-    if not silent:
-        print(f"\nEl método no convergió después de {max_iter} iteraciones.")
-    return x_actual
-
-
-# ---------------------------------------------------------------------------
-# FUNCIÓN 2: El manejador de la interacción con el usuario
-# ---------------------------------------------------------------------------
-def ejecutar_punto_fijo():
-    """
-    Función principal que maneja la entrada del usuario para el método de punto fijo.
-    """
-    print("\n--- Método de Iteración de Punto Fijo ---")
-    
-    mostrar_guia_sintaxis()
-    
-    str_f_x = input("Ingrese la función f(x): ")
-    
-    es_porcentual = 0.05
-    print(f"Criterio de detención (Es) predeterminado: {es_porcentual}%")
-
-    try:
-        x = sympy.symbols('x')
-        f_expr = sympy.sympify(str_f_x)
-        g_expr = x + f_expr
-        g = sympy.lambdify(x, g_expr, 'math')
-        print(f"Función f(x) ingresada: {f_expr}")
-        print(f"Función de iteración g(x) derivada: {g_expr}")
-    except (sympy.SympifyError, TypeError):
-        print("\n❌ Error: La función ingresada no es válida. Revisa la guía de sintaxis.")
-        return
-
-    raices_encontradas = []
-
-    while True:
-        try:
-            print("\n--- Nueva Búsqueda ---")
-            x0_str = input("Ingrese el valor inicial x_0 (o 'salir' para terminar): ")
-            if x0_str.lower() == 'salir':
-                break
-            x0 = float(x0_str)
-        except ValueError:
-            print("Error: El valor inicial debe ser un número.")
-            continue
-
-        print("Calculando la mejor aproximación para usarla como valor verdadero...")
-        valor_verdadero = iteracion_punto_fijo(g, x0, es=1e-12, max_iter=1000, silent=True)
-
-        if valor_verdadero is None:
-            print("No se pudo pre-calcular una raíz convergente desde este punto inicial.")
-            continue
-        
-        print(f"Valor verdadero por defecto (mejor aprox.): {valor_verdadero:.10f}")
-        print(f"\nCalculando con x_0 = {x0}...\n")
-        
-        raiz = iteracion_punto_fijo(g, x0, es_porcentual, valor_verdadero=valor_verdadero, silent=False)
-
-        if raiz is not None:
-            if not any(math.isclose(raiz, r) for r in raices_encontradas):
-                 raices_encontradas.append(raiz)
-        
-        print("\n" + "="*55)
-        if not raices_encontradas:
-            print(" Raíces encontradas hasta ahora: Ninguna")
+class PuntoFijo:
+    def __init__(self, str_f_x, x0, es_porcentual=0.05, max_iter=50, desc=None, g_expr=None):
+        self.str_f_x = str_f_x
+        self.x0 = x0
+        self.es_porcentual = es_porcentual
+        self.max_iter = max_iter
+        self.desc = desc or str_f_x
+        self.x = sympy.symbols('x')
+        self.f_expr = sympy.sympify(str_f_x)
+        if g_expr is not None:
+            self.g_expr = sympy.sympify(g_expr)
         else:
-            print(f" Raíces encontradas hasta ahora ({len(raices_encontradas)}):")
-            for i, r in enumerate(raices_encontradas):
-                print(f"  {i+1}.  Raíz ≈ {r:.7f}")
-        print("="*55)
-        
-        continuar = input("\n¿Desea buscar otra raíz con un punto inicial diferente? (s/n): ").lower()
-        if continuar != 's':
-            break
+            self.g_expr = self.x + self.f_expr
+        self.g = sympy.lambdify(self.x, self.g_expr, 'math')
+        self.pasos = []
+
+    def solve(self):
+        x_anterior = self.x0
+        pasos = [(0, x_anterior, None)]
+        x_actual = None
+        for i in range(1, self.max_iter + 1):
+            try:
+                x_actual = self.g(x_anterior)
+            except OverflowError:
+                print("Advertencia: Divergencia detectada (OverflowError). El método no converge con esta función g(x) y x0.")
+                self.raiz = None
+                self.pasos = pasos
+                return None, pasos
+            if x_actual == 0:
+                self.raiz = None
+                self.pasos = pasos
+                return None, pasos
+            error_aprox = abs((x_actual - x_anterior) / x_actual) * 100
+            pasos.append((i, x_actual, error_aprox))
+            if error_aprox < self.es_porcentual:
+                self.raiz = x_actual
+                self.pasos = pasos
+                return x_actual, pasos
+            x_anterior = x_actual
+        self.raiz = x_actual
+        self.pasos = pasos
+        return x_actual, pasos
+
+    def mostrar_resultados(self):
+        raiz, pasos = self.solve()
+        print(f"\n{'='*50}\nPunto Fijo: {self.desc}")
+        print("\nIteraciones:")
+        print("Iter\tx\t\t   ε_a (%)")
+        for it, xi, ea in pasos:
+            if ea is None:
+                # Muestra x con máximo 5 cifras significativas
+                print(f"{it}\t{xi:.5g}\t   ---")
+            else:
+                print(f"{it}\t{xi:.5g}\t   {ea:.4f}")
+        if raiz is not None:
+            print(f"\nRaíz aproximada (criterio {self.es_porcentual}%): {raiz:.5g}")
+        else:
+            print("\nNo se encontró raíz (divergencia o x_actual=0)")
+
+    def graficar(self):
+        raiz = getattr(self, 'raiz', None)
+        if raiz is None:
+            # Intentar resolver si no se ha hecho
+            self.solve()
+            raiz = self.raiz
+
+        if raiz is None:
+            # No hay raíz: graficar un rango fijo o avisar
+            print("No se puede graficar con raíz nula: el método no convergió.")
+            return  # <---- Salir limpio
+
+        rango = max(5, abs(raiz) + 1)
+        x_vals = np.linspace(raiz - rango, raiz + rango, 400)
+        f_num = sympy.lambdify(self.x, self.f_expr, 'numpy')
+        y_vals = f_num(x_vals)
+        plt.figure()
+        plt.axhline(0, color='black', linewidth=0.8)
+        plt.plot(x_vals, y_vals, label='f(x)')
+        plt.scatter([raiz], [0], color='red', zorder=5, label=f'Raíz ≈ {raiz:.5g}')
+        plt.title(f'Punto Fijo para: {self.desc}')
+        plt.xlabel('x')
+        plt.ylabel('f(x)')
+        plt.legend()
+        plt.grid(True)

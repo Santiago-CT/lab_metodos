@@ -1,29 +1,25 @@
-from punto_fijo import ejecutar_punto_fijo
-from biseccion import ejecutar_biseccion
-from newton import ejecutar_newton
 
-def mostrar_menu():
-    """Muestra el menú de opciones al usuario."""
-    print("\n--- Calculadora de Raíces de Funciones ---")
-    print("Seleccione el método que desea utilizar:")
-    print("1. Método de Bisección")
-    print("2. Método de Newton-Raphson")
-    print("3. Método de Iteración de Punto Fijo")
-    print("4. Salir")
+
+from newton import NewtonRaphson
+from biseccion import Biseccion
+from punto_fijo import PuntoFijo
 
 if __name__ == "__main__":
-    while True:
-        mostrar_menu()
-        opcion = input("Ingrese el número de su opción: ")
+    # Newton-Raphson
+    newton = NewtonRaphson("e^x = 1 + x", 0.5, desc="e^x = 1 + x")
+    newton.mostrar_resultados()
+    newton.graficar()
 
-        if opcion == '1':
-            ejecutar_biseccion()
-        elif opcion == '2':
-            ejecutar_newton()
-        elif opcion == '3':
-            ejecutar_punto_fijo()
-        elif opcion == '4':
-            print("Programa finalizado.")
-            break
-        else:
-            print("Opción no válida. Por favor, intente de nuevo.")
+    # Bisección
+    biseccion = Biseccion("sin(10*x) + cos(3*x)", 0.0, 0.5, desc="f(x) = sin(10x) + cos(3x)")
+    biseccion.mostrar_resultados()
+    biseccion.graficar()
+
+    # Punto Fijo con función contractiva g(x)
+    # g(x) = (1/2)*x**2 - (5/2)*x - (9/2)
+    punto_fijo = PuntoFijo("-1/2*x**2 + 5/2*x + 9/2", 0.0, desc="f(x) = -1/2 x^2 + 5/2 x + 9/2", g_expr="(1/2)*x**2 - (5/2)*x - (9/2)")
+    punto_fijo.mostrar_resultados()
+    punto_fijo.graficar()
+
+    import matplotlib.pyplot as plt
+    plt.show()
