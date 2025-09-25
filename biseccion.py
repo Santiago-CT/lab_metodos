@@ -30,61 +30,46 @@ def biseccion(expr_str, a, b, sigfigs=5, max_iter=50):
 			break
 		if fa * fc < 0:
 			b = c
-			fb = fc
 		else:
 			a = c
 			fa = fc
 	return c, pasos, f_num
 
-if __name__ == "__main__":
-	casos = [
-		{
-			"expr": "e^x = 1 + x",
-			"a": 0.0,
-			"b": 1.0,
-			"desc": "e^x = 1 + x"
-		},
-		{
-			"expr": "sin(10*x) + cos(3*x)",
-			"a": 0.0,
-			"b": 0.5,
-			"desc": "f(x) = sin(10x) + cos(3x)"
-		},
-		{
-			"expr": "-1/2*x**2 + 5/2*x + 9/2",
-			"a": -5.0,
-			"b": 5.0,
-			"desc": "f(x) = -1/2 x^2 + 5/2 x + 9/2"
-		}
-	]
+def ejecutar_biseccion():
+    """Función para manejar la interacción del usuario con el método de bisección."""
+    print("\n--- Método de Bisección ---")
+    expr_str = input("Ingrese la función o ecuación (ej. e^x = 1 + x): ")
+    try:
+        a = float(input("Ingrese el límite inferior del intervalo (a): "))
+        b = float(input("Ingrese el límite superior del intervalo (b): "))
+        sigfigs = int(input("Ingrese el número de cifras significativas (ej. 5): "))
 
-	for caso in casos:
-		print(f"\n{'='*50}\nCaso: {caso['desc']}")
-		try:
-			raiz, pasos, f_num = biseccion(caso["expr"], caso["a"], caso["b"])
-		except Exception as e:
-			print(f"Error: {e}")
-			continue
+        raiz, pasos, f_num = biseccion(expr_str, a, b, sigfigs=sigfigs)
 
-		print("\nIteraciones:")
-		print("Iter\ta\tb\tc\tf(c)")
-		for it, a, b, c, fc in pasos:
-			print(f"{it}\t{a:.8f}\t{b:.8f}\t{c:.8f}\t{fc:.8e}")
+        print("\nIteraciones:")
+        print("Iter\ta\tb\tc\tf(c)")
+        for it, a_i, b_i, c_i, fc_i in pasos:
+            print(f"{it}\t{a_i:.8f}\t{b_i:.8f}\t{c_i:.8f}\t{fc_i:.8e}")
 
-		print(f"\nRaíz aproximada (5 cifras significativas): {raiz:.5g}")
+        print(f"\nRaíz aproximada ({sigfigs} cifras significativas): {raiz:.{sigfigs}g}")
 
-		rango = max(5, abs(raiz) + 1)
-		x_vals = np.linspace(raiz - rango, raiz + rango, 400)
-		y_vals = f_num(x_vals)
+        # Graficar
+        rango = max(5, abs(raiz) + 1)
+        x_vals = np.linspace(raiz - rango, raiz + rango, 400)
+        y_vals = f_num(x_vals)
 
-		plt.figure()
-		plt.axhline(0, color='black', linewidth=0.8)
-		plt.plot(x_vals, y_vals, label='f(x)')
-		plt.scatter([raiz], [0], color='red', zorder=5,
-					label=f'Raíz ≈ {raiz:.5g}')
-		plt.title(f'Bisección para: {caso['desc']}')
-		plt.xlabel('x')
-		plt.ylabel('f(x)')
-		plt.legend()
-		plt.grid(True)
-	plt.show()
+        plt.figure()
+        plt.axhline(0, color='black', linewidth=0.8)
+        plt.plot(x_vals, y_vals, label='f(x)')
+        plt.scatter([raiz], [0], color='red', zorder=5, label=f'Raíz ≈ {raiz:.{sigfigs}g}')
+        plt.title(f'Bisección para: {expr_str}')
+        plt.xlabel('x')
+        plt.ylabel('f(x)')
+        plt.legend()
+        plt.grid(True)
+        plt.show()
+
+    except ValueError as e:
+        print(f"Error: {e}")
+    except Exception as e:
+        print(f"Ocurrió un error inesperado: {e}")
